@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FanOfficial MOBA</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; color: white; font-family: sans-serif; }
+        canvas { background: #1a472a; display: block; margin: 0 auto; border: 5px solid #222; }
+        .ui { position: absolute; top: 10px; left: 10px; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="ui">
+        <h1>FanOfficial MOBA (Beta)</h1>
+        <p>Gunakan WASD untuk Bergerak</p>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800; canvas.height = 600;
+
+        let localPlayers = {};
+
+        socket.on('updatePlayers', (serverPlayers) => {
+            localPlayers = serverPlayers;
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let id in localPlayers) {
+                let p = localPlayers[id];
+                // Gambar Hero
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // HP Bar
+                ctx.fillStyle = 'red';
+                ctx.fillRect(p.x - 20, p.y - 30, 40, 5);
+                ctx.fillStyle = 'lime';
+                ctx.fillRect(p.x - 20, p.y - 30, (p.hp / 100) * 40, 5);
+            }
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            let move = { x: 0, y: 0 };
+            if (e.key === 'w') move.y = -10;
+            if (e.key === 's') move.y = 10;
+            if (e.key === 'a') move.x = -10;
+            if (e.key === 'd') move.x = 10;
+            socket.emit('move', move);
+        });
+
+        draw();
+    </script>
+</body>
+</html>
